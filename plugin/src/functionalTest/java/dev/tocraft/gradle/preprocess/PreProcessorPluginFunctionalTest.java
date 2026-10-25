@@ -3,6 +3,8 @@
  */
 package dev.tocraft.gradle.preprocess;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
@@ -17,8 +19,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * A simple functional test for the 'org.example.greeting' plugin.
@@ -53,20 +53,53 @@ class PreProcessorPluginFunctionalTest {
     }
 
     private GradleRunner setupGradle() throws IOException {
-        writeString(getSettingsFile(), "");
+        writeString(getSettingsFile(),
+                """
+                pluginManagement {
+                    repositories {
+                        google()
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+                }
+                dependencyResolutionManagement {
+                    repositories {
+                        google()
+                        mavenCentral()
+                    }
+                }
+                rootProject.name = 'test-project'
+                """);
+
         writeString(getBuildFile(),
-                "plugins {\n" +
-                        "id('java')\n" +
-                        "id('org.jetbrains.kotlin.jvm') version '2.0.0'\n" +
-                        "id('dev.tocraft.preprocessor')\n" +
-                        "}\n" +
-                        "repositories {\n" +
-                        "mavenCentral()\n" +
-                        "}\n" +
-                        "preprocess {\n" +
-                        "vars.put(\"a\", \"1\");\n" +
-                        "}\n"
-        );
+                """
+                plugins {
+                    id('com.android.application') version '8.13.2'
+                    id('org.jetbrains.kotlin.android') version '2.4.21'
+                    id('dev.tocraft.preprocessor')
+                }
+    
+                android {
+                    namespace 'dev.tocraft.test'
+                    compileSdk 36
+    
+                    defaultConfig {
+                        applicationId 'dev.tocraft.test'
+                        minSdk 23
+                        targetSdk 36
+                    }
+                }
+    
+                preprocess {
+                    vars.put("a", "1")
+                }
+                """);
+
+        // Android requires a manifest.
+        File manifest = new File(projectDir, "src/main/AndroidManifest.xml");
+        //noinspection ResultOfMethodCallIgnored
+        manifest.getParentFile().mkdirs();
+        writeString(manifest, "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" />");
 
         GradleRunner runner = GradleRunner.create();
         runner.forwardOutput();
@@ -78,22 +111,24 @@ class PreProcessorPluginFunctionalTest {
     @Test
     void testApplyOnJava() throws IOException {
         writeString(getTestJavaFile(),
-        "package test;\n" +
-                "class Test {\n" +
-                "public void main(String... args) {\n" +
-                "//#if a\n" +
-                "//$$ System.out.println(\"Test succeeded.\");\n" +
-                "//#else\n" +
-                "System.out.println(\"Test failed\");\n" +
-                "//#endif\n" +
-                "}\n" +
-                "}\n"
+                """
+                package test;
+                class Test {
+                    public void main(String... args) {
+                        //#if a
+                        //$$ System.out.println("Test succeeded.");
+                        //#else
+                        System.out.println("Test failed");
+                        //#endif
+                    }
+                }
+                """
         );
 
         GradleRunner runner = setupGradle();
 
         // Run the java build
-        runner.withArguments("applyPreProcessJava");
+        runner.withArguments("applyPreProcessJava", "--stacktrace", "--info");
         BuildResult javaResult = runner.build();
 
         // Verify the result
@@ -102,30 +137,36 @@ class PreProcessorPluginFunctionalTest {
         }
 
         assertEquals(
-                "package test;\n" +
-                "class Test {\n" +
-                "public void main(String... args) {\n" +
-                "//#if a\n" +
-                "System.out.println(\"Test succeeded.\");\n" +
-                "//#else\n" +
-                "//$$ System.out.println(\"Test failed\");\n" +
-                "//#endif\n" +
-                "}\n" +
-                "}\n", new String(Files.readAllBytes(getTestJavaFile().toPath())));
+                """
+                package test;
+                class Test {
+                    public void main(String... args) {
+                        //#if a
+                        System.out.println("Test succeeded.");
+                        //#else
+                        //$$ System.out.println("Test failed");
+                        //#endif
+                    }
+                }
+                """,
+                new String(Files.readAllBytes(getTestJavaFile().toPath()))
+        );
     }
 
     @Test
     void testApplyOnKotlin() throws IOException {
         writeString(getTestKotlinFile(),
-                "class Test {\n" +
-                        "fun main(args : Array<String>) {\n" +
-                        "//#if a\n" +
-                        "//$$ System.out.println(\"Test succeeded.\");\n" +
-                        "//#else\n" +
-                        "System.out.println(\"Test failed\");\n" +
-                        "//#endif\n" +
-                        "}\n" +
-                        "}\n"
+                """
+                class Test {
+                    fun main(args : Array<String>) {
+                        //#if a
+                        //$$ System.out.println("Test succeeded.");
+                        //#else
+                        System.out.println("Test failed");
+                        //#endif
+                    }
+                }
+                """
         );
 
         GradleRunner runner = setupGradle();
@@ -140,27 +181,33 @@ class PreProcessorPluginFunctionalTest {
         }
 
         assertEquals(
-                "class Test {\n" +
-                        "fun main(args : Array<String>) {\n" +
-                        "//#if a\n" +
-                        "System.out.println(\"Test succeeded.\");\n" +
-                        "//#else\n" +
-                        "//$$ System.out.println(\"Test failed\");\n" +
-                        "//#endif\n" +
-                        "}\n" +
-                        "}\n", new String(Files.readAllBytes(getTestKotlinFile().toPath())));
+                """
+                class Test {
+                    fun main(args : Array<String>) {
+                        //#if a
+                        System.out.println("Test succeeded.");
+                        //#else
+                        //$$ System.out.println("Test failed");
+                        //#endif
+                    }
+                }
+                """,
+                new String(Files.readAllBytes(getTestKotlinFile().toPath()))
+        );
     }
 
     @Test
     void testApplyOnResources() throws IOException {
         writeString(getTestJsonFile(),
-                "{\n" +
-                        "//#if a\n" +
-                        "//$$ \"test\": \"123\"\n" +
-                        "//#else\n" +
-                        "\"test\": \"456\"\n" +
-                        "//#endif\n" +
-                        "}\n"
+                """
+                {
+                    //#if a
+                    //$$ "test": "123"
+                    //#else
+                    "test": "456"
+                    //#endif
+                }
+                """
         );
 
         GradleRunner runner = setupGradle();
@@ -175,13 +222,17 @@ class PreProcessorPluginFunctionalTest {
         }
 
         assertEquals(
-                "{\n" +
-                        "//#if a\n" +
-                        "\"test\": \"123\"\n" +
-                        "//#else\n" +
-                        "//$$ \"test\": \"456\"\n" +
-                        "//#endif\n" +
-                        "}\n", new String(Files.readAllBytes(getTestJsonFile().toPath())));
+                """
+                {
+                    //#if a
+                    "test": "123"
+                    //#else
+                    //$$ "test": "456"
+                    //#endif
+                }
+                """,
+                new String(Files.readAllBytes(getTestJsonFile().toPath()))
+        );
     }
 
     private void writeString(@NotNull File file, String string) throws IOException {

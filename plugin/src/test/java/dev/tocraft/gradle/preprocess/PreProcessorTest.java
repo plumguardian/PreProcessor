@@ -3,15 +3,19 @@
  */
 package dev.tocraft.gradle.preprocess;
 
-import dev.tocraft.gradle.preprocess.util.ParseException;
-import dev.tocraft.gradle.preprocess.util.PreProcessor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import dev.tocraft.gradle.preprocess.util.ParseException;
+import dev.tocraft.gradle.preprocess.util.PreProcessor;
 
 /**
  * A simple unit test for the 'org.example.greeting' plugin.

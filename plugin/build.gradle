@@ -17,7 +17,13 @@ plugins {
 group = "dev.tocraft"
 def pluginId = 'preprocessor'
 
-version = "1.5.4"
+version = "1.5.5"
+
+configurations {
+    compileAndTest
+    compileOnly.extendsFrom(compileAndTest)
+    testRuntimeOnly.extendsFrom(compileAndTest)
+}
 
 repositories {
     google()
@@ -26,9 +32,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21")
-    compileOnly("com.android.tools.build:gradle:8.13.2")
-    testRuntimeOnly("com.android.tools.build:gradle:8.13.2")
+    compileAndTest "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21"
+    compileAndTest "com.android.tools.build:gradle:8.13.2"
 }
 
 testing {
@@ -44,10 +49,12 @@ testing {
             dependencies {
                 // functionalTest test suite depends on the production code in tests
                 implementation project()
+                implementation "com.android.tools.build:gradle:8.13.2"
+                implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21"
             }
 
             targets {
-                all {
+                configureEach {
                     // This test suite should run after the built-in test suite has run its tests
                     testTask.configure { shouldRunAfter(test) }
                 }

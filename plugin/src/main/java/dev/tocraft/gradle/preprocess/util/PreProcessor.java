@@ -1,7 +1,5 @@
 package dev.tocraft.gradle.preprocess.util;
 
-import dev.tocraft.gradle.preprocess.data.Keywords;
-import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,9 +7,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import dev.tocraft.gradle.preprocess.data.Keywords;
+import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
 
 /**
  * The actual preprocessing is happening here

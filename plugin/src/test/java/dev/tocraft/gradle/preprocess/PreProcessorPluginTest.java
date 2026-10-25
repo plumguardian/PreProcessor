@@ -3,11 +3,11 @@
  */
 package dev.tocraft.gradle.preprocess;
 
+import static com.github.javaparser.utils.Utils.assertNotNull;
+
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
-
-import static com.github.javaparser.utils.Utils.assertNotNull;
 
 /**
  * A simple unit test for the 'org.example.greeting' plugin.

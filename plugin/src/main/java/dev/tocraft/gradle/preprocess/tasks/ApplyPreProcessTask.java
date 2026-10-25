@@ -1,8 +1,5 @@
 package dev.tocraft.gradle.preprocess.tasks;
 
-import dev.tocraft.gradle.preprocess.data.Keywords;
-import dev.tocraft.gradle.preprocess.util.PreProcessor;
-import dev.tocraft.gradle.preprocess.util.ReMapper;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
@@ -11,16 +8,26 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputFiles;
+import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.inject.Inject;
+
+import dev.tocraft.gradle.preprocess.data.Keywords;
+import dev.tocraft.gradle.preprocess.util.PreProcessor;
+import dev.tocraft.gradle.preprocess.util.ReMapper;
 
 /**
  * Task to overwrite the original source files with the results of the {@link PreProcessTask}
