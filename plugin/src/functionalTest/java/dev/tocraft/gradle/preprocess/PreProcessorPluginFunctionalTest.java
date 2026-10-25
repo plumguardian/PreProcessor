@@ -44,13 +44,13 @@ class PreProcessorPluginFunctionalTest {
 
     @Contract(value = " -> new", pure = true)
     private @NotNull File getTestKotlinFile() {
-        return new File(projectDir, "src/main/java/test/Test.kt");
+        return new File(projectDir, "src/main/kotlin/test/Test.kt");
     }
 
-    /*@Contract(value = " -> new", pure = true)
+    @Contract(value = " -> new", pure = true)
     private @NotNull File getTestJsonFile() {
         return new File(projectDir, "src/main/resources/test.json5");
-    }*/
+    }
 
     private GradleRunner setupGradle() throws IOException {
         writeString(getSettingsFile(),
@@ -74,32 +74,15 @@ class PreProcessorPluginFunctionalTest {
         writeString(getBuildFile(),
                 """
                 plugins {
-                    id('com.android.application') version '8.13.2'
-                    id('org.jetbrains.kotlin.android') version '2.4.21'
+                    id('java')
+                    id('org.jetbrains.kotlin.jvm')
                     id('dev.tocraft.preprocessor')
-                }
-    
-                android {
-                    namespace 'dev.tocraft.test'
-                    compileSdk 36
-    
-                    defaultConfig {
-                        applicationId 'dev.tocraft.test'
-                        minSdk 23
-                        targetSdk 36
-                    }
                 }
     
                 preprocess {
                     vars.put("a", "1")
                 }
                 """);
-
-        // Android requires a manifest.
-        File manifest = new File(projectDir, "src/main/AndroidManifest.xml");
-        //noinspection ResultOfMethodCallIgnored
-        manifest.getParentFile().mkdirs();
-        writeString(manifest, "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" />");
 
         GradleRunner runner = GradleRunner.create();
         runner.forwardOutput();
@@ -128,7 +111,7 @@ class PreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the java build
-        runner.withArguments("applyPreProcessJava");
+        runner.withArguments("preprocessSources", "--info");
         BuildResult javaResult = runner.build();
 
         // Verify the result
@@ -172,7 +155,7 @@ class PreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the kotlin build
-        runner.withArguments("applyPreProcessKotlin");
+        runner.withArguments("preprocessSources");
         BuildResult javaResult = runner.build();
 
         // Verify the result
@@ -196,7 +179,7 @@ class PreProcessorPluginFunctionalTest {
         );
     }
 
-    /*@Test
+    @Test
     void testApplyOnResources() throws IOException {
         writeString(getTestJsonFile(),
                 """
@@ -213,7 +196,7 @@ class PreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the resources build
-        runner.withArguments("applyPreProcessResources");
+        runner.withArguments("preprocessSources");
         BuildResult resourcesResult = runner.build();
 
         // Verify the result
@@ -233,7 +216,7 @@ class PreProcessorPluginFunctionalTest {
                 """,
                 new String(Files.readAllBytes(getTestJsonFile().toPath()))
         );
-    }*/
+    }
 
     private void writeString(@NotNull File file, String string) throws IOException {
         //noinspection ResultOfMethodCallIgnored

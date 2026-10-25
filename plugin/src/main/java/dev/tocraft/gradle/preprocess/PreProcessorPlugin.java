@@ -3,11 +3,8 @@
  */
 package dev.tocraft.gradle.preprocess;
 
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension;
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +14,6 @@ import java.util.List;
 
 import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
 import dev.tocraft.gradle.preprocess.tasks.ApplyPreProcessTask;
-import dev.tocraft.gradle.preprocess.tasks.PreProcessTask;
 
 /**
  * Main class for the PreProcessor-Plugin
@@ -28,164 +24,33 @@ public class PreProcessorPlugin implements Plugin<Project> {
     public void apply(@NotNull Project project) {
         PreprocessExtension ext = project.getExtensions().create("preprocess", PreprocessExtension.class);
 
-        // TODO: more sources than src/main/java
-
-        ApplicationAndroidComponentsExtension androidComponents =
-                project.getExtensions().getByType(
-                        ApplicationAndroidComponentsExtension.class
+        TaskProvider<ApplyPreProcessTask> preprocessSources =
+                project.getTasks().register(
+                        "preprocessSources",
+                        ApplyPreProcessTask.class,
+                        task -> {
+                            task.getTargets().set(List.of(
+                                    project.file("src")
+                            ));
+                            task.getProjectDirectory().set(
+                                    project.getLayout().getProjectDirectory()
+                            );
+                            task.getVars().convention(ext.vars);
+                            task.getRemap().convention(ext.remapper);
+                            task.getKeywords().convention(ext.keywords);
+                        }
                 );
 
-        TaskProvider<Task> applyAll =
-                project.getTasks().register("applyPreProcess");
+        project.getTasks().configureEach(task -> {
+            if (task instanceof JavaCompile || task instanceof KotlinCompile) {
+                task.dependsOn(preprocessSources);
+            }
+        });
 
-        TaskProvider<Task> applyJava =
-                project.getTasks().register("applyPreProcessJava");
-
-        TaskProvider<Task> applyKotlin =
-                project.getTasks().register("applyPreProcessKotlin");
-
-        androidComponents.onVariants(
-                androidComponents.selector().all(),
-                variant -> {
-                    String variantName = variant.getName();
-
-                    String capitalizedVariantName =
-                            Character.toUpperCase(variantName.charAt(0))
-                                    + variantName.substring(1);
-
-                    TaskProvider<PreProcessTask> preprocessJava =
-                            project.getTasks().register(
-                                    "preprocess" + capitalizedVariantName + "Java",
-                                    PreProcessTask.class,
-                                    task -> {
-                                        task.getVars().convention(ext.vars);
-                                        task.getRemap().convention(ext.remapper);
-                                        task.getKeywords().convention(ext.keywords);
-
-                                        task.getSources().set(List.of(
-                                                project.file("src/main/java")
-                                        ));
-
-                                        task.getTarget().set(
-                                                project.getLayout().getBuildDirectory()
-                                                        .dir("generated/preprocessed/" +
-                                                                variantName + "/java")
-                                        );
-
-                                        task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
-                                        task.getFileExtension().set(".java");
-
-                                        // TODO: remove this (and others) once cache is tested more
-                                        task.getOutputs().upToDateWhen(ignored -> false);
-                                    }
-                            );
-
-                    String javaCompileTaskName = "compile" + capitalizedVariantName + "JavaWithJavac";
-
-                    project.getTasks()
-                            .withType(JavaCompile.class)
-                            .configureEach(task -> {
-                                if (!task.getName().equals(javaCompileTaskName))
-                                    return;
-
-                                task.dependsOn(preprocessJava);
-                                task.setSource(preprocessJava.flatMap(PreProcessTask::getTarget));
-                            });
-
-                    TaskProvider<ApplyPreProcessTask> applyPreProcessJava =
-                            project.getTasks().register(
-                                    "applyPreProcess" + capitalizedVariantName + "Java",
-                                    ApplyPreProcessTask.class,
-                                    preprocessJava
-                            );
-
-                    applyPreProcessJava.configure(task -> {
-                        task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
-                        task.getFileExtension().set(".java");
-                        task.dependsOn(preprocessJava);
-                    });
-
-                    // TODO: optional kotlin
-                    TaskProvider<PreProcessTask> preprocessKotlin =
-                            project.getTasks().register(
-                                    "preprocess" + capitalizedVariantName + "Kotlin",
-                                    PreProcessTask.class,
-                                    task -> {
-                                        task.getVars().convention(ext.vars);
-                                        task.getRemap().convention(ext.remapper);
-                                        task.getKeywords().convention(ext.keywords);
-
-                                        task.getSources().set(List.of(
-                                                project.file("src/main/java")
-                                        ));
-
-                                        task.getTarget().set(
-                                                project.getLayout().getBuildDirectory()
-                                                        .dir("generated/preprocessed/"
-                                                                + variantName + "/kotlin")
-                                        );
-
-                                        task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
-                                        task.getFileExtension().set(".kt");
-                                        task.getOutputs().upToDateWhen(ignored -> false);
-                                    }
-                            );
-
-                    String kotlinCompileTaskName = "compile" + capitalizedVariantName + "Kotlin";
-
-                    project.getTasks()
-                            .withType(KotlinCompile.class)
-                            .configureEach(task -> {
-                                if (!task.getName().equals(kotlinCompileTaskName))
-                                    return;
-
-                                task.dependsOn(preprocessKotlin);
-                                task.setSource(preprocessKotlin.flatMap(PreProcessTask::getTarget));
-                            });
-
-                    TaskProvider<ApplyPreProcessTask> applyPreProcessKotlin =
-                            project.getTasks().register(
-                                    "applyPreProcess" + capitalizedVariantName + "Kotlin",
-                                    ApplyPreProcessTask.class,
-                                    preprocessKotlin
-                            );
-
-                    applyPreProcessKotlin.configure(task -> {
-                        task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
-                        task.getFileExtension().set(".kt");
-                        task.dependsOn(preprocessKotlin);
-                    });
-
-                    TaskProvider<Task> applyVariant =
-                            project.getTasks().register(
-                                    "applyPreProcess" + capitalizedVariantName
-                            );
-
-                    applyVariant.configure(task -> {
-                        task.dependsOn(applyPreProcessJava);
-                        task.dependsOn(applyPreProcessKotlin);
-                    });
-
-                    applyJava.configure(task -> task.dependsOn(applyPreProcessJava));
-                    applyKotlin.configure(task -> task.dependsOn(applyPreProcessKotlin));
-                    applyAll.configure(task -> task.dependsOn(applyVariant));
-                }
-        );
-
-        dependOnSubprojects(project, applyAll, "applyPreProcess");
-        dependOnSubprojects(project, applyJava, "applyPreProcessJava");
-        dependOnSubprojects(project, applyKotlin, "applyPreProcessKotlin");
-    }
-
-    private static void dependOnSubprojects(
-            Project project,
-            @NotNull TaskProvider<Task> aggregate,
-            String taskName
-    ) {
-        aggregate.configure(task -> {
+        preprocessSources.configure(task -> {
             for (Project subproject : project.getSubprojects()) {
                 subproject.getTasks().matching(
-                        candidate -> candidate.getName().equals(taskName)
+                        candidate -> candidate.getName().equals("preprocessSources")
                 ).configureEach(task::dependsOn);
             }
         });

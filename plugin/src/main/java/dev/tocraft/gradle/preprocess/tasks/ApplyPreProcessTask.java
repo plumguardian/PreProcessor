@@ -13,7 +13,6 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFiles;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -30,7 +29,7 @@ import dev.tocraft.gradle.preprocess.util.PreProcessor;
 import dev.tocraft.gradle.preprocess.util.ReMapper;
 
 /**
- * Task to overwrite the original source files with the results of the {@link PreProcessTask}
+ * Task to overwrite the original source files with the processed files
  */
 public class ApplyPreProcessTask extends DefaultTask {
     private final Property<Boolean> removeComments;
@@ -40,26 +39,23 @@ public class ApplyPreProcessTask extends DefaultTask {
     private final ListProperty<File> targets;
     private final ConfigurableFileCollection comingFiles;
     private final DirectoryProperty projectDirectory;
-    private final Property<String> fileExtension;
 
     /**
      * @param factory        some object factory to crate the properties
-     * @param preProcessTask the delgate preprocess task to be used
      */
     @Inject
-    public ApplyPreProcessTask(final @NotNull ObjectFactory factory, final @NotNull TaskProvider<PreProcessTask> preProcessTask) {
+    public ApplyPreProcessTask(final @NotNull ObjectFactory factory) {
         this.removeComments = factory.property(Boolean.class).convention(false);
 
-        this.targets = factory.listProperty(File.class).convention(preProcessTask.flatMap(PreProcessTask::getSources));
+        this.targets = factory.listProperty(File.class);
 
-        this.vars = factory.mapProperty(String.class, Object.class).convention(preProcessTask.flatMap(PreProcessTask::getVars));
-        this.remap = factory.mapProperty(String.class, String.class).convention(preProcessTask.flatMap(PreProcessTask::getRemap));
-        this.keywords = factory.mapProperty(String.class, Keywords.class).convention(preProcessTask.flatMap(PreProcessTask::getKeywords));
+        this.vars = factory.mapProperty(String.class, Object.class);
+        this.remap = factory.mapProperty(String.class, String.class);
+        this.keywords = factory.mapProperty(String.class, Keywords.class);
 
         this.comingFiles = factory.fileCollection();
 
         this.projectDirectory = factory.directoryProperty();
-        this.fileExtension = factory.property(String.class).convention("");
     }
 
     /**
@@ -78,11 +74,6 @@ public class ApplyPreProcessTask extends DefaultTask {
         return targets;
     }
 
-    @Input
-    public Property<String> getFileExtension() {
-        return fileExtension;
-    }
-
     /**
      * @return the overwritten files
      */
@@ -95,6 +86,21 @@ public class ApplyPreProcessTask extends DefaultTask {
     @Override
     public String getDescription() {
         return "PreProcess files.";
+    }
+
+    @Input
+    public MapProperty<String, Object> getVars() {
+        return vars;
+    }
+
+    @Input
+    public MapProperty<String, String> getRemap() {
+        return remap;
+    }
+
+    @Input
+    public MapProperty<String, Keywords> getKeywords() {
+        return keywords;
     }
 
     @Internal
@@ -131,11 +137,7 @@ public class ApplyPreProcessTask extends DefaultTask {
             // iterate over the existing files in the targets folders so the preprocessed files can be copied to their exact source folder
             // might be buggy when interfered by externals
             try (var paths = Files.walk(outBasePath)) {
-                paths.filter(Files::isRegularFile).filter(
-                        path -> fileExtension.get().isEmpty()
-                                || path.getFileName().toString()
-                                .endsWith(fileExtension.get())
-                ).forEach(path -> {
+                paths.filter(Files::isRegularFile).forEach(path -> {
                     File file = path.toFile();
 
                     // old school preprocessing

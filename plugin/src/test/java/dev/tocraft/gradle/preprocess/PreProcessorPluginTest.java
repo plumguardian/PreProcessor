@@ -17,7 +17,6 @@ class PreProcessorPluginTest {
     void pluginRegistersATask() {
         // Create a test project and apply the plugin
         Project project = ProjectBuilder.builder().build();
-        project.getPluginManager().apply("com.android.application");
         assertNotNull(project.getPlugins().apply("dev.tocraft.preprocessor"));
     }
 }
