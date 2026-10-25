@@ -9,6 +9,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.FileSystemOperations;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
@@ -38,18 +39,22 @@ public class PreProcessTask extends DefaultTask {
     private final ListProperty<File> sources;
     private final ConfigurableFileCollection outcomingFiles;
     private final ConfigurableFileCollection incomingFiles;
+    private final DirectoryProperty projectDirectory;
+    private final FileSystemOperations fileSystemOperations;
 
     /**
      * @param factory some object factory to create the properties
      */
     @Inject
-    public PreProcessTask(final @NotNull ObjectFactory factory) {
+    public PreProcessTask(final @NotNull ObjectFactory factory, final @NotNull FileSystemOperations fileSystemOperations) {
         this.removeComments = factory.property(Boolean.class).convention(false);
         this.vars = factory.mapProperty(String.class, Object.class);
         this.remap = factory.mapProperty(String.class, String.class);
         this.sources = factory.listProperty(File.class);
         this.keywords = factory.mapProperty(String.class, Keywords.class);
         this.target = factory.directoryProperty();
+        this.projectDirectory = factory.directoryProperty();
+        this.fileSystemOperations = fileSystemOperations;
 
         this.incomingFiles = factory.fileCollection();
         this.outcomingFiles = factory.fileCollection();
@@ -89,6 +94,11 @@ public class PreProcessTask extends DefaultTask {
     @OutputDirectory
     public DirectoryProperty getTarget() {
         return target;
+    }
+
+    @Internal
+    public DirectoryProperty getProjectDirectory() {
+        return projectDirectory;
     }
 
     /**
@@ -144,27 +154,47 @@ public class PreProcessTask extends DefaultTask {
      */
     @TaskAction
     public void preprocess() {
-        if (sources.get().isEmpty()) {
-            throw new ParseException("No sources defined or source folder is empty!");
-        }
-
         PreProcessor preProcessor = new PreProcessor(removeComments.get(), vars.get(), keywords.get());
         ReMapper reMapper = new ReMapper(remap.get());
 
         List<Entry> sourceFiles = new ArrayList<>();
 
         for (File srcFolder : sources.get()) {
-            final File srcFolderFile = srcFolder.isAbsolute() ? srcFolder : new File(this.getProject().getProjectDir(), srcFolder.getPath());
-            Path inBasePath = srcFolderFile.toPath();
-            for (File file : this.getProject().fileTree(inBasePath)) {
-                Path relPath = inBasePath.relativize(file.toPath());
-                sourceFiles.add(new Entry(relPath.toString(), inBasePath, target.get().getAsFile().toPath()));
+            final Path inBasePath = srcFolder.isAbsolute()
+                    ? srcFolder.toPath()
+                    : projectDirectory.get().getAsFile().toPath()
+                    .resolve(srcFolder.toPath())
+                    .normalize();
+
+            if (!Files.isDirectory(inBasePath)) {
+                getLogger().info(
+                        "Skipping nonexistent source directory: {}",
+                        inBasePath
+                );
+                continue;
+            }
+
+            try (var paths = Files.walk(inBasePath)) {
+                paths.filter(Files::isRegularFile).forEach(path -> {
+                    Path relPath = inBasePath.relativize(path);
+                    sourceFiles.add(new Entry(
+                            relPath.toString(),
+                            inBasePath,
+                            target.get().getAsFile().toPath()
+                    ));
+                });
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to walk source directory: " + inBasePath, e);
             }
         }
 
-        getProject().getLogger().info("Source folders in use: {}", sources);
+        if (sourceFiles.isEmpty()) {
+            throw new ParseException("No sources defined or source folder is empty!");
+        }
 
-        getProject().delete(target.get());
+        getLogger().info("Source folders in use: {}", sources);
+
+        fileSystemOperations.delete(spec -> spec.delete(target.get()));
 
         Set<File> foundInFiles = new HashSet<>();
         Set<File> foundOutFiles = new HashSet<>();
@@ -194,6 +224,6 @@ public class PreProcessTask extends DefaultTask {
             throw new RuntimeException(e);
         }
 
-        getProject().getLogger().info("PreProcessed Successfully");
+        getLogger().info("PreProcessed Successfully");
     }
 }

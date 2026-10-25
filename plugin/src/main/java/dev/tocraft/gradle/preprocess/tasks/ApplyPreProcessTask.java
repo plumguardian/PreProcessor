@@ -5,6 +5,7 @@ import dev.tocraft.gradle.preprocess.util.PreProcessor;
 import dev.tocraft.gradle.preprocess.util.ReMapper;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +32,7 @@ public class ApplyPreProcessTask extends DefaultTask {
     private final MapProperty<String, Keywords> keywords;
     private final ListProperty<File> targets;
     private final ConfigurableFileCollection comingFiles;
+    private final DirectoryProperty projectDirectory;
 
     /**
      * @param factory        some object factory to crate the properties
@@ -45,6 +49,8 @@ public class ApplyPreProcessTask extends DefaultTask {
         this.keywords = factory.mapProperty(String.class, Keywords.class).convention(preProcessTask.flatMap(PreProcessTask::getKeywords));
 
         this.comingFiles = factory.fileCollection();
+
+        this.projectDirectory = factory.directoryProperty();
     }
 
     /**
@@ -77,6 +83,11 @@ public class ApplyPreProcessTask extends DefaultTask {
         return "PreProcess files.";
     }
 
+    @Internal
+    public DirectoryProperty getProjectDirectory() {
+        return projectDirectory;
+    }
+
     /**
      * The actual task action
      */
@@ -89,15 +100,33 @@ public class ApplyPreProcessTask extends DefaultTask {
 
         // place file in their original source folder
         for (File srcFolder : targets.get()) {
-            final File srcFolderFile = srcFolder.isAbsolute() ? srcFolder : new File(getProject().getProjectDir(), srcFolder.getPath());
-            Path outBasePath = srcFolderFile.toPath();
+            final Path outBasePath = srcFolder.isAbsolute()
+                    ? srcFolder.toPath()
+                    : projectDirectory.get().getAsFile().toPath()
+                    .resolve(srcFolder.toPath())
+                    .normalize();
+
+            if (!Files.isDirectory(outBasePath)) {
+                getLogger().info(
+                        "Skipping nonexistent source directory: {}",
+                        outBasePath
+                );
+                continue;
+            }
+
             // iterate over the existing files in the targets folders so the preprocessed files can be copied to their exact source folder
             // might be buggy when interfered by externals
-            for (File file : getProject().fileTree(outBasePath)) {
-                // old school preprocessing
-                preProcessor.convertFile(reMapper, file, file);
+            try (var paths = Files.walk(outBasePath)) {
+                paths.filter(Files::isRegularFile).forEach(path -> {
+                    File file = path.toFile();
 
-                foundFiles.add(file);
+                    // old school preprocessing
+                    preProcessor.convertFile(reMapper, file, file);
+
+                    foundFiles.add(file);
+                });
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to preprocess files in " + outBasePath, e);
             }
         }
 

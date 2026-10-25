@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
+import dev.tocraft.gradle.preprocess.tasks.ApplyPreProcessTask;
 import dev.tocraft.gradle.preprocess.tasks.PreProcessTask;
 
 public final class AndroidPreprocessorIntegration {
@@ -46,6 +47,8 @@ public final class AndroidPreprocessorIntegration {
                                                         .dir("generated/preprocessed/" +
                                                                 variantName + "/java")
                                         );
+
+                                        task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
                                     }
                             );
 
@@ -61,6 +64,20 @@ public final class AndroidPreprocessorIntegration {
                             preprocessJava,
                             PreProcessTask::getTarget
                     );
+
+                    TaskProvider<ApplyPreProcessTask> applyPreProcessJava =
+                            project.getTasks().register(
+                                    "applyPreProcess" +
+                                            Character.toUpperCase(variantName.charAt(0)) +
+                                            variantName.substring(1) + "Java",
+                                    ApplyPreProcessTask.class,
+                                    preprocessJava
+                            );
+
+                    applyPreProcessJava.configure(task -> {
+                        task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
+                        task.dependsOn(preprocessJava);
+                    });
                 }
         );
     }
