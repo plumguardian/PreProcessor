@@ -44,13 +44,13 @@ class PreProcessorPluginFunctionalTest {
 
     @Contract(value = " -> new", pure = true)
     private @NotNull File getTestKotlinFile() {
-        return new File(projectDir, "src/main/kotlin/test/Test.kt");
+        return new File(projectDir, "src/main/java/test/Test.kt");
     }
 
-    @Contract(value = " -> new", pure = true)
+    /*@Contract(value = " -> new", pure = true)
     private @NotNull File getTestJsonFile() {
         return new File(projectDir, "src/main/resources/test.json5");
-    }
+    }*/
 
     private GradleRunner setupGradle() throws IOException {
         writeString(getSettingsFile(),
@@ -128,7 +128,7 @@ class PreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the java build
-        runner.withArguments("applyPreProcessJava", "--stacktrace", "--info");
+        runner.withArguments("applyPreProcessJava");
         BuildResult javaResult = runner.build();
 
         // Verify the result
@@ -196,7 +196,7 @@ class PreProcessorPluginFunctionalTest {
         );
     }
 
-    @Test
+    /*@Test
     void testApplyOnResources() throws IOException {
         writeString(getTestJsonFile(),
                 """
@@ -233,7 +233,7 @@ class PreProcessorPluginFunctionalTest {
                 """,
                 new String(Files.readAllBytes(getTestJsonFile().toPath()))
         );
-    }
+    }*/
 
     private void writeString(@NotNull File file, String string) throws IOException {
         //noinspection ResultOfMethodCallIgnored

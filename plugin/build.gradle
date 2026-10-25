@@ -17,7 +17,7 @@ plugins {
 group = "dev.tocraft"
 def pluginId = 'preprocessor'
 
-version = "1.5.5"
+version = "1.5.6"
 
 configurations {
     compileAndTest
@@ -49,8 +49,6 @@ testing {
             dependencies {
                 // functionalTest test suite depends on the production code in tests
                 implementation project()
-                implementation "com.android.tools.build:gradle:8.13.2"
-                implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21"
             }
 
             targets {
@@ -61,6 +59,14 @@ testing {
             }
         }
     }
+}
+
+gradlePlugin {
+    testSourceSets.add(sourceSets.functionalTest)
+}
+
+tasks.named("pluginUnderTestMetadata") {
+    pluginClasspath.from(configurations.compileAndTest)
 }
 
 gradlePlugin {

@@ -21,7 +21,7 @@ import dev.tocraft.gradle.preprocess.util.PreProcessor;
  * A simple unit test for the 'org.example.greeting' plugin.
  */
 class PreProcessorTest {
-    private static final Map<String, Object> vars = new HashMap<String, Object>() {
+    private static final Map<String, Object> vars = new HashMap<>() {
         {
             put("zero", "0");
             put("one", "1");
@@ -98,25 +98,25 @@ class PreProcessorTest {
     @Test
     void testConvertSource() {
         // unexpected endif
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#endif");
             }
         }));
         // unexpected else
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#else");
             }
         }));
         // unexpected elseif
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#elseif");
             }
         }));
         // elseif after else
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//#else");
@@ -125,12 +125,12 @@ class PreProcessorTest {
             }
         }));
         // missing endif
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
             }
         }));
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//#if one");
@@ -139,13 +139,13 @@ class PreProcessorTest {
             }
         }));
         // missing space
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#ifone");
                 add("//#endif");
             }
         }));
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//#elseiftwo");
@@ -153,7 +153,7 @@ class PreProcessorTest {
             }
         }));
         // empty if condition
-        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<String>() {
+        assertThrows(ParseException.class, () -> preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if");
                 add("//#endif");
@@ -162,26 +162,26 @@ class PreProcessorTest {
 
         // test with add("code");
         // if one ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -189,26 +189,26 @@ class PreProcessorTest {
             }
         }));
         // if zero ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("code");
@@ -216,7 +216,7 @@ class PreProcessorTest {
             }
         }));
         // if one ... else ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -224,7 +224,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -233,7 +233,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -241,7 +241,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -251,7 +251,7 @@ class PreProcessorTest {
             }
         }));
         // if zero ... else ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -259,7 +259,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("code");
@@ -268,7 +268,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -276,7 +276,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -286,7 +286,7 @@ class PreProcessorTest {
             }
         }));
         // if one ... elseif zero ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -294,7 +294,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -303,7 +303,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -311,7 +311,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -320,7 +320,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -328,7 +328,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -337,7 +337,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -345,7 +345,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -355,7 +355,7 @@ class PreProcessorTest {
             }
         }));
         // if zero ... elseif one ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -363,7 +363,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -372,7 +372,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -380,7 +380,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("code");
@@ -389,7 +389,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -397,7 +397,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -406,7 +406,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -414,7 +414,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("code");
@@ -424,7 +424,7 @@ class PreProcessorTest {
             }
         }));
         // if one ... elseif one ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -432,7 +432,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -441,7 +441,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -449,7 +449,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -458,7 +458,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -466,7 +466,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -475,7 +475,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -483,7 +483,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -493,7 +493,7 @@ class PreProcessorTest {
             }
         }));
         // if ... elseif ... else ... endif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -503,7 +503,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -514,7 +514,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("code");
@@ -524,7 +524,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//$$ code");
@@ -535,7 +535,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -545,7 +545,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -557,7 +557,7 @@ class PreProcessorTest {
             }
         }));
         // multiple elseif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -573,7 +573,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -591,7 +591,7 @@ class PreProcessorTest {
             }
         }));
         // nested if
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//#if zero");
@@ -607,7 +607,7 @@ class PreProcessorTest {
                 add("//#endif");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//#if zero");
@@ -625,7 +625,7 @@ class PreProcessorTest {
             }
         }));
         // nested elseif
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//#if zero");
@@ -637,7 +637,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//#if zero");
@@ -647,39 +647,39 @@ class PreProcessorTest {
                 add("//#endif");
                 add("//#elseif one");
                 add("//$$ code");
-                add("//#endif");
-            }
-        }));
-        assertEquals(new ArrayList<String>() {
-            {
-                add("//#if zero");
-                add("//$$ code");
-                add("//#elseif one");
-                add("//#if zero");
-                add("//$$ code");
-                add("//#else");
-                add("code");
-                add("//#endif");
-                add("//#else");
-                add("//$$ code");
-                add("//#endif");
-            }
-        }, preProcessor.convertSource(new ArrayList<String>() {
-            {
-                add("//#if zero");
-                add("code");
-                add("//#elseif one");
-                add("//#if zero");
-                add("code");
-                add("//#else");
-                add("code");
-                add("//#endif");
-                add("//#else");
-                add("code");
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
+            {
+                add("//#if zero");
+                add("//$$ code");
+                add("//#elseif one");
+                add("//#if zero");
+                add("//$$ code");
+                add("//#else");
+                add("code");
+                add("//#endif");
+                add("//#else");
+                add("//$$ code");
+                add("//#endif");
+            }
+        }, preProcessor.convertSource(new ArrayList<>() {
+            {
+                add("//#if zero");
+                add("code");
+                add("//#elseif one");
+                add("//#if zero");
+                add("code");
+                add("//#else");
+                add("code");
+                add("//#endif");
+                add("//#else");
+                add("code");
+                add("//#endif");
+            }
+        }));
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -695,7 +695,7 @@ class PreProcessorTest {
                 add("code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
@@ -712,7 +712,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//#elseif one");
@@ -722,7 +722,7 @@ class PreProcessorTest {
                 add("//#endif");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//#elseif one");
@@ -733,7 +733,7 @@ class PreProcessorTest {
                 add("//#endif");
             }
         }));
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//#elseif one");
@@ -742,7 +742,7 @@ class PreProcessorTest {
                 add("//$$ code");
                 add("//#endif");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if one");
                 add("//#elseif one");
@@ -758,12 +758,12 @@ class PreProcessorTest {
     void testRemoveComments() {
         PreProcessor preProcessor = new PreProcessor(true, vars);
 
-        assertEquals(new ArrayList<String>() {
+        assertEquals(new ArrayList<>() {
             {
                 add("code");
                 add("code");
             }
-        }, preProcessor.convertSource(new ArrayList<String>() {
+        }, preProcessor.convertSource(new ArrayList<>() {
             {
                 add("//#if zero");
                 add("//$$ code");
