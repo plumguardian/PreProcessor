@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 
-import static org.gradle.internal.impldep.org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * A simple functional test for the 'org.example.greeting' plugin.

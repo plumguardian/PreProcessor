@@ -11,22 +11,24 @@ plugins {
     id "java"
     id "java-gradle-plugin"
     id "maven-publish"
-    id 'com.gradle.plugin-publish' version '1.2.1'
+    id 'com.gradle.plugin-publish' version '1.3.1'
 }
 
 group = "dev.tocraft"
 def pluginId = 'preprocessor'
 
-version = "1.4"
+version = "1.5.0"
 
 repositories {
-    // Use Maven Central for resolving dependencies.
+    google()
     mavenCentral()
     gradlePluginPortal()
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21")
+    compileOnly("com.android.tools.build:gradle:8.13.2")
+    testRuntimeOnly("com.android.tools.build:gradle:8.13.2")
 }
 
 testing {
@@ -34,7 +36,7 @@ testing {
         // Configure the built-in test suite
         test {
             // Use JUnit Jupiter test framework
-            useJUnitJupiter('5.10.2')
+            useJUnitJupiter('5.14.4')
         }
 
         // Create a new test suite
@@ -90,7 +92,7 @@ jar {
 java {
     withSourcesJar()
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 

@@ -7,6 +7,7 @@ import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
 import dev.tocraft.gradle.preprocess.util.ReMapper;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
@@ -33,7 +34,7 @@ public class PreProcessTask extends DefaultTask {
     private final MapProperty<String, Object> vars;
     private final MapProperty<String, String> remap;
     private final MapProperty<String, Keywords> keywords;
-    private final Property<File> target;
+    private final DirectoryProperty target;
     private final ListProperty<File> sources;
     private final ConfigurableFileCollection outcomingFiles;
     private final ConfigurableFileCollection incomingFiles;
@@ -48,7 +49,7 @@ public class PreProcessTask extends DefaultTask {
         this.remap = factory.mapProperty(String.class, String.class);
         this.sources = factory.listProperty(File.class);
         this.keywords = factory.mapProperty(String.class, Keywords.class);
-        this.target = factory.property(File.class);
+        this.target = factory.directoryProperty();
 
         this.incomingFiles = factory.fileCollection();
         this.outcomingFiles = factory.fileCollection();
@@ -85,8 +86,8 @@ public class PreProcessTask extends DefaultTask {
     /**
      * @return the target folder where the preprocessed files will be written to
      */
-    @Input
-    public Property<File> getTarget() {
+    @OutputDirectory
+    public DirectoryProperty getTarget() {
         return target;
     }
 
@@ -157,7 +158,7 @@ public class PreProcessTask extends DefaultTask {
             Path inBasePath = srcFolderFile.toPath();
             for (File file : this.getProject().fileTree(inBasePath)) {
                 Path relPath = inBasePath.relativize(file.toPath());
-                sourceFiles.add(new Entry(relPath.toString(), inBasePath, target.get().toPath()));
+                sourceFiles.add(new Entry(relPath.toString(), inBasePath, target.get().getAsFile().toPath()));
             }
         }
 
@@ -185,10 +186,10 @@ public class PreProcessTask extends DefaultTask {
         this.incomingFiles.setFrom(foundInFiles);
 
         try {
-            Path infoFile = target.get().toPath().getParent().resolve(getName() + ".txt");
+            Path infoFile = target.get().getAsFile().toPath().getParent().resolve(getName() + ".txt");
             //noinspection ResultOfMethodCallIgnored
             infoFile.getParent().toFile().mkdirs();
-            Files.write(infoFile, ("Target: " + getTarget().get().toPath() + "\nSources: " + getSources().get() + "\nTotal Files: " + sourceFiles.size()).getBytes());
+            Files.write(infoFile, ("Target: " + getTarget().get().getAsFile().toPath() + "\nSources: " + getSources().get() + "\nTotal Files: " + sourceFiles.size()).getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

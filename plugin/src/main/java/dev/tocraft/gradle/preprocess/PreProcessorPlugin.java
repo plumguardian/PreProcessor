@@ -9,7 +9,6 @@ import dev.tocraft.gradle.preprocess.tasks.PreProcessTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.DuplicatesStrategy;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
@@ -42,7 +41,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                     task.getVars().convention(ext.vars);
                     task.getRemap().convention(ext.remapper);
                     task.getKeywords().convention(ext.keywords);
-                    task.getTarget().set(project.getLayout().getBuildDirectory().file(generated + "java").map(RegularFile::getAsFile));
+                    task.getTarget().set(project.getLayout().getBuildDirectory().dir(generated + "java"));
                     task.getOutputs().upToDateWhen(t -> false);
                 });
 
@@ -60,7 +59,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                         task.getVars().convention(ext.vars);
                     task.getRemap().convention(ext.remapper);
                     task.getKeywords().convention(ext.keywords);
-                        task.getTarget().set(project.getLayout().getBuildDirectory().file(generated + "kotlin").map(RegularFile::getAsFile));
+                        task.getTarget().set(project.getLayout().getBuildDirectory().dir(generated + "kotlin"));
                         task.getOutputs().upToDateWhen(t -> false);
                     });
 
@@ -78,7 +77,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                     task.getVars().convention(ext.vars);
                     task.getRemap().convention(ext.remapper);
                     task.getKeywords().convention(ext.keywords);
-                    task.getTarget().set(project.getLayout().getBuildDirectory().file(generated + "resources").map(RegularFile::getAsFile));
+                    task.getTarget().set(project.getLayout().getBuildDirectory().dir(generated + "resources"));
                     task.getOutputs().upToDateWhen(t -> false);
                 });
 
@@ -92,6 +91,11 @@ public class PreProcessorPlugin implements Plugin<Project> {
                 project.getTasks().register(sourceSet.getTaskName("applyPreProcess", "Resources"), ApplyPreProcessTask.class, preprocessResources).configure(task -> task.dependsOn(preprocessResources));
             });
         }
+
+        project.getPlugins().withId(
+                "com.android.application",
+                ignored -> AndroidPreprocessorIntegration.configure(project, ext)
+        );
 
         project.getTasks().register("applyPreProcess").configure(task -> {
             for (ApplyPreProcessTask subApplyPreProcessTask : project.getTasks().withType(ApplyPreProcessTask.class)) {
