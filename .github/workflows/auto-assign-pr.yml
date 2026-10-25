@@ -1,0 +1,19 @@
+name: Auto assign PR
+
+permissions:
+  pull-requests: write
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr edit "$PR_URL" --add-assignee "plumguardian"
