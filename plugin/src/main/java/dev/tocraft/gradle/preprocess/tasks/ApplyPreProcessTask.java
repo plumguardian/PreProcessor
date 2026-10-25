@@ -33,6 +33,7 @@ public class ApplyPreProcessTask extends DefaultTask {
     private final ListProperty<File> targets;
     private final ConfigurableFileCollection comingFiles;
     private final DirectoryProperty projectDirectory;
+    private final Property<String> fileExtension;
 
     /**
      * @param factory        some object factory to crate the properties
@@ -51,6 +52,7 @@ public class ApplyPreProcessTask extends DefaultTask {
         this.comingFiles = factory.fileCollection();
 
         this.projectDirectory = factory.directoryProperty();
+        this.fileExtension = factory.property(String.class).convention("");
     }
 
     /**
@@ -67,6 +69,11 @@ public class ApplyPreProcessTask extends DefaultTask {
     @InputFiles
     public ListProperty<File> getTargets() {
         return targets;
+    }
+
+    @Input
+    public Property<String> getFileExtension() {
+        return fileExtension;
     }
 
     /**
@@ -117,7 +124,11 @@ public class ApplyPreProcessTask extends DefaultTask {
             // iterate over the existing files in the targets folders so the preprocessed files can be copied to their exact source folder
             // might be buggy when interfered by externals
             try (var paths = Files.walk(outBasePath)) {
-                paths.filter(Files::isRegularFile).forEach(path -> {
+                paths.filter(Files::isRegularFile).filter(
+                        path -> fileExtension.get().isEmpty()
+                                || path.getFileName().toString()
+                                .endsWith(fileExtension.get())
+                ).forEach(path -> {
                     File file = path.toFile();
 
                     // old school preprocessing

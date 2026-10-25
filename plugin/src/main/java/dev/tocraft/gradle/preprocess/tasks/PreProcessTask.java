@@ -41,6 +41,7 @@ public class PreProcessTask extends DefaultTask {
     private final ConfigurableFileCollection incomingFiles;
     private final DirectoryProperty projectDirectory;
     private final FileSystemOperations fileSystemOperations;
+    private final Property<String> fileExtension;
 
     /**
      * @param factory some object factory to create the properties
@@ -55,6 +56,7 @@ public class PreProcessTask extends DefaultTask {
         this.target = factory.directoryProperty();
         this.projectDirectory = factory.directoryProperty();
         this.fileSystemOperations = fileSystemOperations;
+        this.fileExtension = factory.property(String.class).convention("");
 
         this.incomingFiles = factory.fileCollection();
         this.outcomingFiles = factory.fileCollection();
@@ -127,6 +129,11 @@ public class PreProcessTask extends DefaultTask {
         return keywords;
     }
 
+    @Input
+    public Property<String> getFileExtension() {
+        return fileExtension;
+    }
+
     /**
      * @return the preprocessed files
      */
@@ -175,7 +182,11 @@ public class PreProcessTask extends DefaultTask {
             }
 
             try (var paths = Files.walk(inBasePath)) {
-                paths.filter(Files::isRegularFile).forEach(path -> {
+                paths.filter(Files::isRegularFile).filter(
+                        path -> fileExtension.get().isEmpty()
+                                || path.getFileName().toString()
+                                .endsWith(fileExtension.get())
+                ).forEach(path -> {
                     Path relPath = inBasePath.relativize(path);
                     sourceFiles.add(new Entry(
                             relPath.toString(),

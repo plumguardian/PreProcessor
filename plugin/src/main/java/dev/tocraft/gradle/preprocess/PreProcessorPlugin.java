@@ -44,6 +44,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                     task.getTarget().set(project.getLayout().getBuildDirectory().dir(generated + "java"));
                     task.getOutputs().upToDateWhen(t -> false);
                     task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
+                    task.getFileExtension().set(".java");
                 });
 
                 project.getTasks().named(sourceSet.getCompileJavaTaskName(), JavaCompile.class, task -> {
@@ -54,6 +55,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                 project.getTasks().register(sourceSet.getTaskName("applyPreProcess", "Java"), ApplyPreProcessTask.class, preprocessJava)
                         .configure(task -> {
                             task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
+                            task.getFileExtension().set(".java");
                             task.dependsOn(preprocessJava);
                         });
 
@@ -67,6 +69,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                         task.getTarget().set(project.getLayout().getBuildDirectory().dir(generated + "kotlin"));
                         task.getOutputs().upToDateWhen(t -> false);
                         task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
+                        task.getFileExtension().set(".kt");
                     });
 
                     project.getTasks().named(sourceSet.getCompileTaskName("kotlin"), KotlinCompile.class, task -> {
@@ -77,6 +80,7 @@ public class PreProcessorPlugin implements Plugin<Project> {
                     project.getTasks().register(sourceSet.getTaskName("applyPreProcess", "Kotlin"), ApplyPreProcessTask.class, preprocessKotlin)
                             .configure(task -> {
                                 task.getProjectDirectory().set(project.getLayout().getProjectDirectory());
+                                task.getFileExtension().set(".kt");
                                 task.dependsOn(preprocessKotlin);
                             });
                 }
