@@ -95,6 +95,11 @@ public class PreProcessor {
             return Arrays.stream(parts).allMatch(it -> evalExpression(it.trim(), lineNumber, fileName));
         }
 
+        // TODO: things like !a == b becomes !(a == b), so should operator precedence be added
+        if (condition.startsWith("!")) {
+            return !evalExpression(condition.substring(1).trim(), lineNumber, fileName);
+        }
+
         Matcher matcher = EXPR_PATTERN.matcher(condition);
         if (matcher.matches()) {
             try {
