@@ -1,0 +1,19 @@
+name: Auto assign issue
+
+permissions:
+  issues: write
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  assign-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: gh issue edit "$ISSUE_URL" --add-assignee "plumguardian"

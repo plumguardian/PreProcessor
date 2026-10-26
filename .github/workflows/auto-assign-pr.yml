@@ -4,12 +4,12 @@ permissions:
   pull-requests: write
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
 
 jobs:
-  assign:
+  assign-pr:
     runs-on: ubuntu-latest
     steps:
       - name: Assign PR
