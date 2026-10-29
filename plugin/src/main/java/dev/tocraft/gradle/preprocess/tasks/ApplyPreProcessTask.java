@@ -113,7 +113,7 @@ public class ApplyPreProcessTask extends DefaultTask {
      */
     @TaskAction
     public void applyPreProcess() {
-        Set<File> foundFiles = new HashSet<>();
+        Set<Path> foundFiles = new HashSet<>();
 
         PreProcessor preProcessor = new PreProcessor(removeComments.get(), vars.get(), keywords.get());
         ReMapper reMapper = new ReMapper(remap.get());
@@ -138,12 +138,16 @@ public class ApplyPreProcessTask extends DefaultTask {
             // might be buggy when interfered by externals
             try (var paths = Files.walk(outBasePath)) {
                 paths.filter(Files::isRegularFile).forEach(path -> {
-                    File file = path.toFile();
-
-                    // old school preprocessing
-                    preProcessor.convertFile(reMapper, file, file);
-
-                    foundFiles.add(file);
+                    try {
+                        if (preProcessor.convertFileInPlace(reMapper, path)) {
+                            foundFiles.add(path);
+                        }
+                    } catch (IOException e) {
+                        getLogger().warn(
+                                "Failed to preprocess file '{}'",
+                                path, e
+                        );
+                    }
                 });
             } catch (IOException e) {
                 throw new RuntimeException("Failed to preprocess files in " + outBasePath, e);

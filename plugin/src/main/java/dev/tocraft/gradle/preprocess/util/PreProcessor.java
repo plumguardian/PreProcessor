@@ -3,10 +3,12 @@ package dev.tocraft.gradle.preprocess.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -298,6 +300,33 @@ public class PreProcessor {
                 throw new RuntimeException(ex);
             }
         }
+    }
+
+    /**
+     * @param reMapper ReMapper to be used to replace matches in the files
+     * @param path     the file that shall be preprocessed
+     * @return if the file was modified
+     */
+    public boolean convertFileInPlace(@NotNull ReMapper reMapper, @NotNull Path path) throws IOException {
+        List<String> originalLines = Files.readAllLines(path);
+        List<String> lines = reMapper.convertSource(
+                convertSource(
+                        originalLines,
+                        path.getFileName().toString()
+                )
+        );
+
+        if (lines.equals(originalLines))
+            return false;
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            for (String line : lines) {
+                writer.write(line);
+                writer.newLine();
+            }
+        }
+
+        return true;
     }
 
     private static final class IfStackEntry {
