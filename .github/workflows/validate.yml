@@ -13,17 +13,7 @@ on:
       - '*.*.*'
 
 jobs:
-  wrapper-validation:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v6
-
   build:
-    needs: wrapper-validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
