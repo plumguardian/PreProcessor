@@ -1,0 +1,15 @@
+def pluginId = "preprocessor"
+project.ext.set("pluginId", pluginId)
+apply from: rootProject.file("build.common.gradle")
+
+gradlePlugin {
+    plugins {
+        preprocessor {
+            id = group + '.' + pluginId
+            implementationClass = 'dev.tocraft.gradle.preprocess.PreProcessorPlugin'
+            displayName = 'PreProcessor Plugin'
+            description = 'Comment PreProcessor for Java & Kotlin!'
+            tags.set(['preprocess', 'java', 'kotlin'])
+        }
+    }
+}

@@ -20,4 +20,4 @@ develocity {
 }
 
 rootProject.name = 'PreProcessor'
-include('plugin')
+include('core', 'android')

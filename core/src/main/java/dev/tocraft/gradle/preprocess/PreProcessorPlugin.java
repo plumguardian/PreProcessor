@@ -22,7 +22,11 @@ import dev.tocraft.gradle.preprocess.tasks.ApplyPreProcessTask;
 public class PreProcessorPlugin implements Plugin<Project> {
     @Override
     public void apply(@NotNull Project project) {
-        PreprocessExtension ext = project.getExtensions().create("preprocess", PreprocessExtension.class);
+        PreprocessExtension ext =
+                project.getExtensions().create(
+                        "preprocess",
+                        PreprocessExtension.class
+                );
 
         TaskProvider<ApplyPreProcessTask> preprocessSources =
                 project.getTasks().register(

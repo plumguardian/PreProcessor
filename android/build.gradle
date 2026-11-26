@@ -1,0 +1,20 @@
+def pluginId = "preprocessor.android"
+project.ext.set("pluginId", pluginId)
+apply from: rootProject.file("build.common.gradle")
+
+dependencies {
+    implementation project(':core')
+    compileAndTest "com.android.tools.build:gradle:8.13.2"
+}
+
+gradlePlugin {
+    plugins {
+        androidPreprocessor {
+            id = group + '.' + pluginId
+            implementationClass = 'dev.tocraft.gradle.preprocess.AndroidPreProcessorPlugin'
+            displayName = 'PreProcessor Android Plugin'
+            description = 'Comment PreProcessor for Android!'
+            tags.set(['preprocess', 'java', 'kotlin', 'android'])
+        }
+    }
+}

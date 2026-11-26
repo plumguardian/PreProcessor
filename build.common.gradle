@@ -1,0 +1,122 @@
+apply plugin: "java"
+apply plugin: "java-gradle-plugin"
+apply plugin: "maven-publish"
+
+def pluginId = project.ext.get("pluginId")
+group = "dev.tocraft"
+version = "1.5.10.0"
+
+configurations {
+    compileAndTest
+    compileOnly.extendsFrom(compileAndTest)
+    testRuntimeOnly.extendsFrom(compileAndTest)
+}
+
+repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+dependencies {
+    compileAndTest "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21"
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter('5.14.4')
+        }
+
+        functionalTest(JvmTestSuite) {
+            dependencies {
+                implementation project()
+            }
+
+            targets {
+                configureEach {
+                    testTask.configure { shouldRunAfter(test) }
+                }
+            }
+        }
+    }
+}
+
+gradlePlugin {
+    testSourceSets.add(sourceSets.functionalTest)
+}
+
+tasks.named("pluginUnderTestMetadata") {
+    pluginClasspath.from(configurations.compileAndTest)
+}
+
+gradlePlugin {
+    website = 'https://github.com/plumguardian/PreProcessor'
+    vcsUrl = 'https://github.com/plumguardian/PreProcessor'
+}
+
+gradlePlugin.testSourceSets.add(sourceSets.functionalTest)
+
+tasks.named('check') {
+    // Include functionalTest as part of the check lifecycle
+    dependsOn(testing.suites.functionalTest)
+}
+
+tasks.withType(AbstractPublishToMaven).configureEach {
+    dependsOn(tasks.named("check"))
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Version': project.version
+    }
+}
+
+java {
+    withSourcesJar()
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+publishing {
+    publications {
+        pluginMaven(MavenPublication) {
+            configureEach {
+                groupId = group
+                artifactId = pluginId
+
+                pom {
+                    name.set("PreProcessor")
+                    description.set("Comment PreProcessor for Java.")
+                    url.set("https://github.com/plumguardian/PreProcessor")
+
+                    licenses {
+                        license {
+                            name.set("CC BY-NC-SA 4.0")
+                            url.set("https://raw.githubusercontent.com/plumguardian/PreProcessor/main/LICENSE.TXT")
+                        }
+                    }
+
+                    scm {
+                        connection.set("git:https://github.com/plumguardian/PreProcessor.git")
+                        developerConnection.set("git:https://github.com/plumguardian/PreProcessor.git")
+                        url.set("https://github.com/plumguardian/PreProcessor")
+                    }
+
+                    developers {
+                        developer {
+                            id = "plumguardian"
+                            name = "PlumGuardian"
+                            url = "https://github.com/plumguardian"
+                        }
+                    }
+
+                    properties.put("maven.compiler.release", "25")
+                }
+            }
+        }
+    }
+}
