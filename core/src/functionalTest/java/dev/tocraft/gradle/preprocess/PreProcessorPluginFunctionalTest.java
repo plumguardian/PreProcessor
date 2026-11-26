@@ -111,7 +111,7 @@ class PreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the java build
-        runner.withArguments("preprocessSources", "--info");
+        runner.withArguments("preprocessSources");
         BuildResult javaResult = runner.build();
 
         // Verify the result
