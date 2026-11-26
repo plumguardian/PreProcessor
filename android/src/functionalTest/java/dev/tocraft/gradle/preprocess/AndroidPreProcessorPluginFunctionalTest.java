@@ -19,6 +19,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * A simple functional test for the 'org.example.greeting' plugin.
@@ -57,7 +58,7 @@ class AndroidPreProcessorPluginFunctionalTest {
         return new File(projectDir, "src/main/resources/test.json5");
     }
 
-    private GradleRunner setupGradle() throws IOException {
+    private @NotNull GradleRunner setupGradle() throws IOException {
         writeString(getSettingsFile(),
                 """
                 pluginManagement {
@@ -130,7 +131,7 @@ class AndroidPreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the java build
-        runner.withArguments("preprocessDebugSources");
+        runner.withArguments("applyPreprocessReleaseSources", "preprocessDebugSources");
         BuildResult javaResult = runner.build();
 
         // Verify the result
@@ -138,7 +139,7 @@ class AndroidPreProcessorPluginFunctionalTest {
             assertEquals(TaskOutcome.SUCCESS, task.getOutcome());
         }
 
-        assertEquals(
+        assertFileEquals(
                 """
                 package test;
                 class Test {
@@ -151,7 +152,7 @@ class AndroidPreProcessorPluginFunctionalTest {
                     }
                 }
                 """,
-                new String(Files.readAllBytes(getTestJavaFile().toPath()))
+                getTestJavaFile()
         );
     }
 
@@ -174,7 +175,7 @@ class AndroidPreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the kotlin build
-        runner.withArguments("preprocessDebugSources");
+        runner.withArguments("applyPreprocessReleaseSources", "preprocessDebugSources");
         BuildResult javaResult = runner.build();
 
         // Verify the result
@@ -182,7 +183,7 @@ class AndroidPreProcessorPluginFunctionalTest {
             assertEquals(TaskOutcome.SUCCESS, task.getOutcome());
         }
 
-        assertEquals(
+        assertFileEquals(
                 """
                 class Test {
                     fun main(args : Array<String>) {
@@ -194,7 +195,7 @@ class AndroidPreProcessorPluginFunctionalTest {
                     }
                 }
                 """,
-                new String(Files.readAllBytes(getTestKotlinFile().toPath()))
+                getTestKotlinFile()
         );
     }
 
@@ -215,7 +216,7 @@ class AndroidPreProcessorPluginFunctionalTest {
         GradleRunner runner = setupGradle();
 
         // Run the resources build
-        runner.withArguments("preprocessDebugSources");
+        runner.withArguments("applyPreprocessReleaseSources", "preprocessDebugSources");
         BuildResult resourcesResult = runner.build();
 
         // Verify the result
@@ -223,7 +224,7 @@ class AndroidPreProcessorPluginFunctionalTest {
             assertEquals(TaskOutcome.SUCCESS, task.getOutcome());
         }
 
-        assertEquals(
+        assertFileEquals(
                 """
                 {
                     //#if a
@@ -233,7 +234,7 @@ class AndroidPreProcessorPluginFunctionalTest {
                     //#endif
                 }
                 """,
-                new String(Files.readAllBytes(getTestJsonFile().toPath()))
+                getTestJsonFile()
         );
     }
 
@@ -243,5 +244,15 @@ class AndroidPreProcessorPluginFunctionalTest {
         try (Writer writer = new FileWriter(file)) {
             writer.write(string);
         }
+    }
+
+    private void assertFileEquals(String expected, @NotNull File actual) throws IOException {
+        Path actualPath = actual.toPath();
+        Path projectDirPath = projectDir.toPath();
+        Path generatedFile = projectDirPath
+                .resolve("build/generated/preprocessed/debug")
+                .resolve(projectDirPath.relativize(actualPath));
+        assertEquals(expected, new String(Files.readAllBytes(actualPath)));
+        assertEquals(expected, new String(Files.readAllBytes(generatedFile)));
     }
 }

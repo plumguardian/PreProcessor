@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
+import dev.tocraft.gradle.preprocess.tasks.PreProcessTask;
 import dev.tocraft.gradle.preprocess.tasks.ApplyPreProcessTask;
 
 /**
@@ -44,12 +45,11 @@ public class AndroidPreProcessorPlugin implements Plugin<Project> {
                     String capitalizedVariantName = Character.toUpperCase(variantName.charAt(0))
                             + variantName.substring(1);
                     String flavorName = variant.getFlavorName();
-                    String taskName = "preprocess" + capitalizedVariantName + "Sources";
 
-                    TaskProvider<ApplyPreProcessTask> preprocessSources =
+                    TaskProvider<PreProcessTask> preprocessSources =
                             project.getTasks().register(
-                                    taskName,
-                                    ApplyPreProcessTask.class,
+                                    "preprocess" + capitalizedVariantName + "Sources",
+                                    PreProcessTask.class,
                                     task -> {
                                         task.getTargets().set(List.of(
                                                 project.file("src")
@@ -57,7 +57,6 @@ public class AndroidPreProcessorPlugin implements Plugin<Project> {
                                         task.getProjectDirectory().set(
                                                 project.getLayout().getProjectDirectory()
                                         );
-                                        task.getVars().convention(ext.vars);
                                         task.getVars().set(project.provider(() -> {
                                             Map<String, Object> vars = new HashMap<>(ext.vars);
                                             vars.put("variant", variantName);
@@ -66,21 +65,60 @@ public class AndroidPreProcessorPlugin implements Plugin<Project> {
                                         }));
                                         task.getRemap().convention(ext.remapper);
                                         task.getKeywords().convention(ext.keywords);
+                                        task.getOutput().set(
+                                                project.getLayout().getBuildDirectory()
+                                                        .dir("generated/preprocessed/" + variantName)
+                                        );
                                     }
                             );
 
                     String javaCompileTaskName = "compile" + capitalizedVariantName + "JavaWithJavac";
                     String kotlinCompileTaskName = "compile" + capitalizedVariantName + "Kotlin";
 
-                    project.getTasks().configureEach(task -> {
-                        String name = task.getName();
-                        if ((name.equals(javaCompileTaskName) && task instanceof JavaCompile)
-                                || (name.equals(kotlinCompileTaskName) && task instanceof KotlinCompile)) {
-                            task.dependsOn(preprocessSources);
-                        }
+                    project.getTasks()
+                            .withType(JavaCompile.class)
+                            .matching(task -> task.getName().equals(kotlinCompileTaskName))
+                            .configureEach(task -> {
+                                task.dependsOn(preprocessSources);
+                                task.setSource(preprocessSources.flatMap(PreProcessTask::getOutput));
+                            });
+
+                    project.getTasks()
+                            .withType(KotlinCompile.class)
+                            .matching(task -> task.getName().equals(kotlinCompileTaskName))
+                            .configureEach(task -> {
+                                task.dependsOn(preprocessSources);
+                                task.setSource(preprocessSources.flatMap(PreProcessTask::getOutput));
+                            });
+
+                    project.afterEvaluate(p -> {
+                        p.getTasks()
+                                .named(javaCompileTaskName, JavaCompile.class)
+                                .configure(task -> task.setSource(preprocessSources.flatMap(PreProcessTask::getOutput)));
+
+                        p.getTasks()
+                                .named(kotlinCompileTaskName, KotlinCompile.class)
+                                .configure(task -> task.setSource(preprocessSources.flatMap(PreProcessTask::getOutput)));
                     });
 
                     preprocessSources.configure(task -> {
+                        String taskName = task.getName();
+                        for (Project subproject : project.getSubprojects()) {
+                            subproject.getTasks().matching(
+                                    candidate -> candidate.getName().equals(taskName)
+                            ).configureEach(task::dependsOn);
+                        }
+                    });
+
+                    TaskProvider<ApplyPreProcessTask> applyPreprocess =
+                            project.getTasks().register(
+                                    "applyPreprocess" + capitalizedVariantName + "Sources",
+                                    ApplyPreProcessTask.class,
+                                    task -> task.applyFrom(preprocessSources)
+                            );
+
+                    applyPreprocess.configure(task -> {
+                        String taskName = task.getName();
                         for (Project subproject : project.getSubprojects()) {
                             subproject.getTasks().matching(
                                     candidate -> candidate.getName().equals(taskName)

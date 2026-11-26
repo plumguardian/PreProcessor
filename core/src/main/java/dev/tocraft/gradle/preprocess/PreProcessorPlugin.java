@@ -45,16 +45,19 @@ public class PreProcessorPlugin implements Plugin<Project> {
                         }
                 );
 
-        project.getTasks().configureEach(task -> {
-            if (task instanceof JavaCompile || task instanceof KotlinCompile) {
-                task.dependsOn(preprocessSources);
-            }
-        });
+        project.getTasks()
+                .withType(JavaCompile.class)
+                .configureEach(task -> task.dependsOn(preprocessSources));
+
+        project.getTasks()
+                .withType(KotlinCompile.class)
+                .configureEach(task -> task.dependsOn(preprocessSources));
 
         preprocessSources.configure(task -> {
+            String taskName = task.getName();
             for (Project subproject : project.getSubprojects()) {
                 subproject.getTasks().matching(
-                        candidate -> candidate.getName().equals("preprocessSources")
+                        candidate -> candidate.getName().equals(taskName)
                 ).configureEach(task::dependsOn);
             }
         });

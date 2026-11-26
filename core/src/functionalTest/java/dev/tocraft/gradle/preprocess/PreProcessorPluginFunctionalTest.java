@@ -52,7 +52,7 @@ class PreProcessorPluginFunctionalTest {
         return new File(projectDir, "src/main/resources/test.json5");
     }
 
-    private GradleRunner setupGradle() throws IOException {
+    private @NotNull GradleRunner setupGradle() throws IOException {
         writeString(getSettingsFile(),
                 """
                 pluginManagement {

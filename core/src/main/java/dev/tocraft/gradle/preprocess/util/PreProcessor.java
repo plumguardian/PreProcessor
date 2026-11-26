@@ -277,28 +277,27 @@ public class PreProcessor {
      * @param inFile  the file that shall be preprocessed
      * @param outFile the file where the preprocessed lines shall be written to
      */
-    public void convertFile(@NotNull ReMapper reMapper, @NotNull File inFile, @NotNull File outFile) {
+    public void convertFile(@NotNull ReMapper reMapper, @NotNull Path inFile, @NotNull Path outFile) throws IOException {
         try {
-            List<String> lines = Files.readAllLines(inFile.toPath());
-            lines = this.convertSource(lines, inFile.getName());
-            lines = reMapper.convertSource(lines);
+            List<String> lines = reMapper.convertSource(
+                    convertSource(
+                            Files.readAllLines(inFile),
+                            inFile.getFileName().toString()
+                    )
+            );
 
-            //noinspection ResultOfMethodCallIgnored
-            outFile.getParentFile().mkdirs();
-            try (FileWriter writer = new FileWriter(outFile)) {
+            Files.createDirectories(outFile.getParent());
+            try (BufferedWriter writer = Files.newBufferedWriter(outFile)) {
                 for (String line : lines) {
-                    writer.write(line + "\n");
+                    writer.write(line);
+                    writer.newLine();
                 }
             }
         } catch (IOException e) {
             // some error while reading. Just copy the file
-            try {
-                //noinspection ResultOfMethodCallIgnored
-                outFile.getParentFile().mkdirs();
-                Files.copy(inFile.toPath(), outFile.toPath());
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            Files.createDirectories(outFile.getParent());
+            Files.copy(inFile, outFile);
+            throw e;
         }
     }
 

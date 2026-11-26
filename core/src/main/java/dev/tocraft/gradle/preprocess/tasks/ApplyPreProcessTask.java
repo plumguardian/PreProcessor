@@ -8,11 +8,16 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFiles;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -41,10 +46,10 @@ public class ApplyPreProcessTask extends DefaultTask {
     private final DirectoryProperty projectDirectory;
 
     /**
-     * @param factory        some object factory to crate the properties
+     * @param factory some object factory to crate the properties
      */
     @Inject
-    public ApplyPreProcessTask(final @NotNull ObjectFactory factory) {
+    public ApplyPreProcessTask(@NotNull ObjectFactory factory) {
         this.removeComments = factory.property(Boolean.class).convention(false);
 
         this.targets = factory.listProperty(File.class);
@@ -59,9 +64,24 @@ public class ApplyPreProcessTask extends DefaultTask {
     }
 
     /**
+     * @param preProcessTask the delgate preprocess task to be used
+     */
+    public void applyFrom(@NotNull TaskProvider<PreProcessTask> preProcessTask) {
+        this.removeComments.convention(preProcessTask.flatMap(PreProcessTask::getRemoveComments));
+
+        this.targets.convention(preProcessTask.flatMap(PreProcessTask::getTargets));
+
+        this.vars.convention(preProcessTask.flatMap(PreProcessTask::getVars));
+        this.remap.convention(preProcessTask.flatMap(PreProcessTask::getRemap));
+        this.keywords.convention(preProcessTask.flatMap(PreProcessTask::getKeywords));
+
+        this.projectDirectory.convention(preProcessTask.flatMap(PreProcessTask::getProjectDirectory));
+    }
+
+    /**
      * @return if the preprocess task will remove commented preprocessor commands
      */
-    @Internal
+    @Input
     public Property<Boolean> getRemoveComments() {
         return removeComments;
     }
@@ -69,7 +89,9 @@ public class ApplyPreProcessTask extends DefaultTask {
     /**
      * @return target folder where the sources files should be overwritten
      */
+    @SkipWhenEmpty
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public ListProperty<File> getTargets() {
         return targets;
     }
@@ -108,6 +130,13 @@ public class ApplyPreProcessTask extends DefaultTask {
         return projectDirectory;
     }
 
+    @Input
+    public Provider<String> getProjectDirectoryPath() {
+        return projectDirectory.map(dir ->
+                dir.getAsFile().toPath().toAbsolutePath().normalize().toString()
+        );
+    }
+
     /**
      * The actual task action
      */
@@ -115,12 +144,16 @@ public class ApplyPreProcessTask extends DefaultTask {
     public void applyPreProcess() {
         Set<Path> foundFiles = new HashSet<>();
 
-        PreProcessor preProcessor = new PreProcessor(removeComments.get(), vars.get(), keywords.get());
+        PreProcessor preProcessor = new PreProcessor(
+                removeComments.get(),
+                vars.get(),
+                keywords.get()
+        );
         ReMapper reMapper = new ReMapper(remap.get());
 
         // place file in their original source folder
         for (File srcFolder : targets.get()) {
-            final Path outBasePath = srcFolder.isAbsolute()
+            Path outBasePath = srcFolder.isAbsolute()
                     ? srcFolder.toPath()
                     : projectDirectory.get().getAsFile().toPath()
                     .resolve(srcFolder.toPath())
