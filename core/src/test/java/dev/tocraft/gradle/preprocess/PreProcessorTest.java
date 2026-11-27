@@ -27,6 +27,9 @@ class PreProcessorTest {
             put("one", "1");
             put("two", "2");
             put("test", "hello");
+            put("test2", "hello");
+            put("tru", "TrUe");
+            put("fals", "fALsE");
         }
     };
 
@@ -35,6 +38,10 @@ class PreProcessorTest {
     @Test
     void testEvalExpression() {
         // existence of vars
+        assertTrue(preProcessor.evalExpression("tru"));
+        assertFalse(preProcessor.evalExpression("fals"));
+        assertTrue(preProcessor.evalExpression("tRue"));
+        assertFalse(preProcessor.evalExpression("falsE"));
         assertFalse(preProcessor.evalExpression("zero"));
         assertTrue(preProcessor.evalExpression("one"));
         assertTrue(preProcessor.evalExpression("test"));
@@ -44,11 +51,15 @@ class PreProcessorTest {
         assertTrue(preProcessor.evalExpression("one == 1"));
         assertFalse(preProcessor.evalExpression("1 == zero"));
         assertTrue(preProcessor.evalExpression("1 == one"));
+        assertTrue(preProcessor.evalExpression("test == hello"));
+        assertTrue(preProcessor.evalExpression("test == test2"));
         // a != b
         assertFalse(preProcessor.evalExpression("zero != 0"));
         assertTrue(preProcessor.evalExpression("zero != 1"));
         assertTrue(preProcessor.evalExpression("zero != one"));
         assertFalse(preProcessor.evalExpression("one != 1"));
+        assertTrue(preProcessor.evalExpression("test != helo"));
+        assertTrue(preProcessor.evalExpression("test != one"));
         // a > b
         assertTrue(preProcessor.evalExpression("one > 0"));
         assertFalse(preProcessor.evalExpression("one > 1"));
@@ -93,6 +104,9 @@ class PreProcessorTest {
         assertFalse(preProcessor.evalExpression("one && zero || one && zero"));
         assertTrue(preProcessor.evalExpression("one || zero && one || zero"));
         assertFalse(preProcessor.evalExpression("zero || zero && one || zero"));
+        // !a
+        assertFalse(preProcessor.evalExpression("!tru"));
+        assertTrue(preProcessor.evalExpression("!fals"));
     }
 
     @Test
