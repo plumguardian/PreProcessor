@@ -4,6 +4,8 @@
 package dev.tocraft.gradle.preprocess;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
@@ -56,6 +58,13 @@ class AndroidPreProcessorPluginFunctionalTest {
     @Contract(value = " -> new", pure = true)
     private @NotNull File getTestJsonFile() {
         return new File(projectDir, "src/main/resources/test.json5");
+    }
+
+    private @NotNull Path getGeneratedPath(@NotNull Path actualPath) {
+        Path projectDirPath = projectDir.toPath();
+        return projectDirPath
+                .resolve("build/generated/preprocessed/debug")
+                .resolve(projectDirPath.relativize(actualPath));
     }
 
     private @NotNull GradleRunner setupGradle() throws IOException {
@@ -224,7 +233,8 @@ class AndroidPreProcessorPluginFunctionalTest {
             assertEquals(TaskOutcome.SUCCESS, task.getOutcome());
         }
 
-        assertFileEquals(
+        Path testJsonFile = getTestJsonFile().toPath();
+        assertNotEquals(
                 """
                 {
                     //#if a
@@ -234,8 +244,9 @@ class AndroidPreProcessorPluginFunctionalTest {
                     //#endif
                 }
                 """,
-                getTestJsonFile()
+                new String(Files.readAllBytes(testJsonFile))
         );
+        assertFalse(Files.exists(getGeneratedPath(testJsonFile)));
     }
 
     private void writeString(@NotNull File file, String string) throws IOException {
@@ -248,11 +259,7 @@ class AndroidPreProcessorPluginFunctionalTest {
 
     private void assertFileEquals(String expected, @NotNull File actual) throws IOException {
         Path actualPath = actual.toPath();
-        Path projectDirPath = projectDir.toPath();
-        Path generatedFile = projectDirPath
-                .resolve("build/generated/preprocessed/debug")
-                .resolve(projectDirPath.relativize(actualPath));
         assertEquals(expected, new String(Files.readAllBytes(actualPath)));
-        assertEquals(expected, new String(Files.readAllBytes(generatedFile)));
+        assertEquals(expected, new String(Files.readAllBytes(getGeneratedPath(actualPath))));
     }
 }

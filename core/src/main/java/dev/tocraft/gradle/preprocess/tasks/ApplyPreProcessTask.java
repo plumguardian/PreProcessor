@@ -9,6 +9,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
@@ -25,7 +26,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -44,6 +47,7 @@ public class ApplyPreProcessTask extends DefaultTask {
     private final ListProperty<File> targets;
     private final ConfigurableFileCollection comingFiles;
     private final DirectoryProperty projectDirectory;
+    private final SetProperty<String> fileExtension;
 
     /**
      * @param factory some object factory to crate the properties
@@ -61,6 +65,8 @@ public class ApplyPreProcessTask extends DefaultTask {
         this.comingFiles = factory.fileCollection();
 
         this.projectDirectory = factory.directoryProperty();
+
+        this.fileExtension = factory.setProperty(String.class);
     }
 
     /**
@@ -76,6 +82,8 @@ public class ApplyPreProcessTask extends DefaultTask {
         this.keywords.convention(preProcessTask.flatMap(PreProcessTask::getKeywords));
 
         this.projectDirectory.convention(preProcessTask.flatMap(PreProcessTask::getProjectDirectory));
+
+        this.fileExtension.convention(preProcessTask.flatMap(PreProcessTask::getFileExtension));
     }
 
     /**
@@ -137,6 +145,11 @@ public class ApplyPreProcessTask extends DefaultTask {
         );
     }
 
+    @Input
+    public SetProperty<String> getFileExtension() {
+        return fileExtension;
+    }
+
     /**
      * The actual task action
      */
@@ -150,6 +163,10 @@ public class ApplyPreProcessTask extends DefaultTask {
                 keywords.get()
         );
         ReMapper reMapper = new ReMapper(remap.get());
+
+        Set<String> extensions = fileExtension.get().stream()
+                .map(ext -> ext.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
 
         // place file in their original source folder
         for (File srcFolder : targets.get()) {
@@ -170,7 +187,17 @@ public class ApplyPreProcessTask extends DefaultTask {
             // iterate over the existing files in the targets folders so the preprocessed files can be copied to their exact source folder
             // might be buggy when interfered by externals
             try (var paths = Files.walk(outBasePath)) {
-                paths.filter(Files::isRegularFile).forEach(path -> {
+                var pathStream = paths.filter(Files::isRegularFile);
+
+                if (!extensions.isEmpty()) {
+                    pathStream = pathStream.filter(path -> {
+                        String name = path.getFileName().toString();
+                        int dot = name.lastIndexOf('.');
+                        return dot >= 0 && extensions.contains(name.substring(dot).toLowerCase(Locale.ROOT));
+                    });
+                }
+
+                pathStream.forEach(path -> {
                     try {
                         if (preProcessor.convertFileInPlace(reMapper, path)) {
                             foundFiles.add(path);

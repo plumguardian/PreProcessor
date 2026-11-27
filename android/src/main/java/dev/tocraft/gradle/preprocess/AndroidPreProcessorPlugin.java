@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import dev.tocraft.gradle.preprocess.data.PreprocessExtension;
 import dev.tocraft.gradle.preprocess.tasks.PreProcessTask;
@@ -69,6 +70,7 @@ public class AndroidPreProcessorPlugin implements Plugin<Project> {
                                                 project.getLayout().getBuildDirectory()
                                                         .dir("generated/preprocessed/" + variantName)
                                         );
+                                        task.getFileExtension().set(Set.of(".java", ".kt"));
                                     }
                             );
 
