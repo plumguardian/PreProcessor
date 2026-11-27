@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Sometime in the future, the PreProcess will also auto-handle the imports
@@ -32,8 +31,8 @@ public class ImportManager {
             }
         }
 
-        while (codeLines.get(0).trim().isEmpty()) {
-            codeLines.remove(0);
+        while (codeLines.getFirst().trim().isEmpty()) {
+            codeLines.removeFirst();
         }
 
         // Reconstruct the modified lines
@@ -46,7 +45,7 @@ public class ImportManager {
         modifiedLines.addAll(imports.stream().filter(imp -> {
             String[] impArr = imp.split("\\.");
             return anyStringInListContains(codeLines, impArr[impArr.length - 1]);
-        }).map(imp -> "import " + imp + ";").collect(Collectors.toList()));
+        }).map(imp -> "import " + imp + ";").toList());
         modifiedLines.add("");
 
         modifiedLines.addAll(codeLines);

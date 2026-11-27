@@ -4,8 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -333,18 +331,11 @@ public class PreProcessor {
         return true;
     }
 
-    private static final class IfStackEntry {
-        private final boolean currentValue;
-        private final boolean elseFound;
-        private final boolean trueFound;
-
-        public IfStackEntry(boolean currentValue, boolean elseFound, boolean trueFound) {
-            this.currentValue = currentValue;
-            this.elseFound = elseFound;
-            this.trueFound = trueFound;
-        }
-
-    }
+    private record IfStackEntry(
+            boolean currentValue,
+            boolean elseFound,
+            boolean trueFound
+    ) {}
 
     private static @NotNull String getExtension(@Nullable String fileName) {
         String extension = "";

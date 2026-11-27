@@ -70,7 +70,7 @@ public class ApplyPreProcessTask extends DefaultTask {
     }
 
     /**
-     * @param preProcessTask the delgate preprocess task to be used
+     * @param preProcessTask the delegate preprocess task to be used
      */
     public void applyFrom(@NotNull TaskProvider<PreProcessTask> preProcessTask) {
         this.removeComments.convention(preProcessTask.flatMap(PreProcessTask::getRemoveComments));
