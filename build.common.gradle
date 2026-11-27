@@ -4,7 +4,7 @@ apply plugin: "maven-publish"
 
 def pluginId = project.ext.get("pluginId")
 group = "dev.tocraft"
-version = "1.5.10.0"
+version = "1.5.10.1"
 
 configurations {
     compileAndTest
