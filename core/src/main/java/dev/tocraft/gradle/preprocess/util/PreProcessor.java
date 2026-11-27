@@ -65,12 +65,12 @@ public class PreProcessor {
     private static final String AND_PATTERN = Pattern.quote("&&");
 
     private String getVarValue(@Nullable String key) {
-        if (key != null) {
-            Object value = vars.get(key);
-            return value != null ? value.toString() : key;
-        } else {
+        if (key == null) {
             return null;
         }
+
+        Object value = vars.get(key);
+        return value != null ? value.toString() : key;
     }
 
     /**
@@ -104,55 +104,60 @@ public class PreProcessor {
 
         Matcher matcher = EXPR_PATTERN.matcher(condition);
         if (matcher.matches()) {
+            String lhsValue = getVarValue(matcher.group(1).trim());
+            String rhsValue = getVarValue(matcher.group(3).trim());
+            String operator = matcher.group(2);
+
             try {
-                int lhs = Integer.parseInt(getVarValue(matcher.group(1).trim()));
-                int rhs = Integer.parseInt(getVarValue(matcher.group(3).trim()));
-                boolean bool;
-                switch (matcher.group(2)) {
-                    case "==": {
-                        bool = lhs == rhs;
-                        break;
-                    }
-                    case "!=": {
-                        bool = lhs != rhs;
-                        break;
-                    }
-                    case ">=": {
-                        bool = lhs >= rhs;
-                        break;
-                    }
-                    case "<=": {
-                        bool = lhs <= rhs;
-                        break;
-                    }
-                    case ">": {
-                        bool = lhs > rhs;
-                        break;
-                    }
-                    case "<": {
-                        bool = lhs < rhs;
-                        break;
-                    }
-                    default: {
-                        throw new ParseException("Invalid Expression!", lineNumber, fileName);
-                    }
-                }
-                return bool;
+                int lhs = Integer.parseInt(lhsValue);
+                int rhs = Integer.parseInt(rhsValue);
+
+                return switch (operator) {
+                    case "==" -> lhs == rhs;
+                    case "!=" -> lhs != rhs;
+                    case ">=" -> lhs >= rhs;
+                    case "<=" -> lhs <= rhs;
+                    case ">"  -> lhs > rhs;
+                    case "<"  -> lhs < rhs;
+                    default -> throw new ParseException(
+                        "Invalid Numeric Expression",
+                        lineNumber, fileName
+                    );
+                };
             } catch (NumberFormatException e) {
-                throw new ParseException(e.getMessage(), lineNumber, fileName);
+                return switch (operator) {
+                    case "==" ->  lhsValue.equals(rhsValue);
+                    case "!=" -> !lhsValue.equals(rhsValue);
+                    default -> throw new ParseException(
+                        "Invalid Non-numeric Expression",
+                        lineNumber, fileName
+                    );
+                };
             }
         }
 
         String result = getVarValue(condition);
 
-        if (result != null && !result.equals(condition)) {
-            try {
-                return Integer.parseInt(result) != 0;
-            } catch (NumberFormatException ignored) {
-            }
-            return true;
-        } else {
+        if (result == null) {
             return false;
+        }
+
+        result = result.trim();
+
+        if (result.equalsIgnoreCase("true")) {
+            return true;
+        }
+
+        if (result.equalsIgnoreCase("false")
+                || result.isEmpty()
+                || result.equals(condition)) {
+            return false;
+        }
+
+        try {
+            return Integer.parseInt(result) != 0;
+        } catch (NumberFormatException ignored) {
+            return true;
         }
     }
 
