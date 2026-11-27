@@ -87,7 +87,13 @@ public class PreProcessTask extends DefaultTask {
     @Internal
     @Override
     public String getDescription() {
-        return "PreProcess files.";
+        return "PreProcess files";
+    }
+
+    @Internal
+    @Override
+    public String getGroup() {
+        return "preprocessing";
     }
 
     @Input
